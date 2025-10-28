@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  email         String   @unique
+  passwordHash  String?
+  googleId      String?  @unique
+  name          String?
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Event {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId       String   @db.ObjectId
+  title         String
+  date          DateTime?
+  locale        String
+  sectionsI18n  Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model BudgetItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String   @db.ObjectId
+  category  String
+  title     String
+  planned   Int      @default(0)
+  paid      Int      @default(0)
+  vendorId  String?
+  dueDate   DateTime?
+  status    String
+  notes     String?
+  order     Int      @default(0)
+}
+
+model ChecklistItem {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId     String   @db.ObjectId
+  title       String
+  description String?
+  status      String
+  dueDate     DateTime?
+  assigneeId  String?
+  order       Int      @default(0)
+}
+
+model Guest {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String   @db.ObjectId
+  groupId   String?
+  firstName String
+  lastName  String
+  phone     String?
+  email     String?
+  side      String
+  status    String
+  guests    Int      @default(1)
+  tags      String[]
+  notes     String?
+  seatId    String?
+}
+
+model Table {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String   @db.ObjectId
+  name      String
+  capacity  Int      @default(8)
+  side      String?
+  order     Int      @default(0)
+}
+
+model SeatAssignment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String   @db.ObjectId
+  tableId   String   @db.ObjectId
+  guestId   String   @db.ObjectId
+  position  Int      @default(0)
+}
+
