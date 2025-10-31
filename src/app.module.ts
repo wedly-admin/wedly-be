@@ -6,6 +6,7 @@ import { BudgetModule } from './budget/budget.module';
 import { ChecklistModule } from './checklist/checklist.module';
 import { GuestsModule } from './guests/guests.module';
 import { SeatingModule } from './seating/seating.module';
+import { MicrositeModule } from './microsite/microsite.module';
 import { PrismaService } from './common/prisma.service';
 
 @Module({
@@ -17,6 +18,7 @@ import { PrismaService } from './common/prisma.service';
     ChecklistModule,
     GuestsModule,
     SeatingModule,
+    MicrositeModule,
   ],
   providers: [PrismaService],
 })

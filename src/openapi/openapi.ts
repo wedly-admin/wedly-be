@@ -90,6 +90,59 @@ export function buildOpenAPIDocument() {
             capacity: { type: 'integer', default: 8 }
           },
           required: ['name']
+        },
+        MicrositeUpsert: {
+          type: 'object',
+          properties: {
+            slug: { type: 'string', pattern: '^[a-z0-9-]+$', minLength: 3 },
+            theme: {
+              type: 'object',
+              properties: {
+                primary: { type: 'string', default: '#7C3AED' },
+                font: { type: 'string', default: 'Inter' },
+                radius: { type: 'string', default: '1rem' }
+              }
+            },
+            seo: {
+              type: 'object',
+              properties: {
+                title: { type: 'object' },
+                description: { type: 'object' },
+                ogImage: { type: 'string', format: 'uri' }
+              }
+            },
+            sections: {
+              type: 'array',
+              items: {
+                oneOf: [
+                  { type: 'object', properties: { type: { enum: ['hero'] } } },
+                  { type: 'object', properties: { type: { enum: ['schedule'] } } },
+                  { type: 'object', properties: { type: { enum: ['venue'] } } },
+                  { type: 'object', properties: { type: { enum: ['gallery'] } } },
+                  { type: 'object', properties: { type: { enum: ['faq'] } } },
+                  { type: 'object', properties: { type: { enum: ['rsvp'] } } },
+                  { type: 'object', properties: { type: { enum: ['customHtml'] } } }
+                ]
+              }
+            }
+          },
+          required: ['slug']
+        },
+        MicrositePublish: {
+          type: 'object',
+          properties: {
+            publish: { type: 'boolean', default: true }
+          }
+        },
+        MediaAsset: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', format: 'uri' },
+            kind: { type: 'string', enum: ['image', 'video', 'file'] },
+            alt: { type: 'string' },
+            meta: { type: 'object' }
+          },
+          required: ['url', 'kind']
         }
       },
     },
@@ -101,6 +154,7 @@ export function buildOpenAPIDocument() {
       { name: 'Checklist', description: 'Task checklist' },
       { name: 'Guests', description: 'Guest management' },
       { name: 'Seating', description: 'Seating arrangements' },
+      { name: 'Microsite', description: 'Public microsites with bilingual content' },
     ],
     paths: {
       '/auth/register': {
@@ -277,6 +331,105 @@ export function buildOpenAPIDocument() {
           parameters: [{ name: 'eventId', in: 'path', required: true, schema: { type: 'string' } }],
           responses: {
             200: { description: 'List of tables' }
+          }
+        }
+      },
+      '/events/{eventId}/microsite': {
+        put: {
+          tags: ['Microsite'],
+          summary: 'Upsert microsite (draft)',
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: 'eventId', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/MicrositeUpsert' } } }
+          },
+          responses: {
+            200: { description: 'Microsite upserted' }
+          }
+        },
+        get: {
+          tags: ['Microsite'],
+          summary: 'Get microsite (admin)',
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: 'eventId', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: {
+            200: { description: 'Microsite data' }
+          }
+        }
+      },
+      '/events/{eventId}/microsite/publish': {
+        post: {
+          tags: ['Microsite'],
+          summary: 'Publish microsite',
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: 'eventId', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/MicrositePublish' } } }
+          },
+          responses: {
+            200: { description: 'Microsite published' }
+          }
+        }
+      },
+      '/events/{eventId}/microsite/preview-token': {
+        post: {
+          tags: ['Microsite'],
+          summary: 'Enable/disable preview token',
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: 'eventId', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            content: { 'application/json': { schema: { type: 'object', properties: { enable: { type: 'boolean' } } } } }
+          },
+          responses: {
+            200: { description: 'Preview token toggled' }
+          }
+        }
+      },
+      '/events/{eventId}/assets': {
+        post: {
+          tags: ['Microsite'],
+          summary: 'Upload media asset',
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: 'eventId', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/MediaAsset' } } }
+          },
+          responses: {
+            201: { description: 'Asset created' }
+          }
+        },
+        get: {
+          tags: ['Microsite'],
+          summary: 'List media assets',
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: 'eventId', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: {
+            200: { description: 'List of assets' }
+          }
+        }
+      },
+      '/m/{slug}': {
+        get: {
+          tags: ['Microsite'],
+          summary: 'Get public microsite',
+          parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: {
+            200: { description: 'Published microsite JSON' },
+            404: { description: 'Not found' }
+          }
+        }
+      },
+      '/m/{slug}/preview': {
+        get: {
+          tags: ['Microsite'],
+          summary: 'Preview draft microsite',
+          parameters: [
+            { name: 'slug', in: 'path', required: true, schema: { type: 'string' } },
+            { name: 'token', in: 'query', required: true, schema: { type: 'string' } }
+          ],
+          responses: {
+            200: { description: 'Draft microsite JSON' },
+            401: { description: 'Invalid preview token' }
           }
         }
       }

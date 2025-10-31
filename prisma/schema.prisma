@@ -87,3 +87,27 @@ model SeatAssignment {
   position  Int      @default(0)
 }
 
+model Microsite {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId       String   @unique @db.ObjectId
+  slug          String   @unique
+  theme         Json?
+  draftSections Json?
+  pubSections   Json?
+  seo           Json?
+  status        String   @default("DRAFT")
+  previewToken  String?
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+}
+
+model MediaAsset {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId   String   @db.ObjectId
+  url       String
+  kind      String
+  alt       String?
+  meta      Json?
+  createdAt DateTime @default(now())
+}
+
