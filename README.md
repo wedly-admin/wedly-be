@@ -85,6 +85,7 @@ Interactive API documentation is available at `/docs` when the server is running
 
 ### Key Endpoints
 
+
 #### Authentication
 - `POST /auth/register` - Register with email/password
 - `POST /auth/login` - Login with email/password
