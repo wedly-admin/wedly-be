@@ -75,6 +75,7 @@ npm start
 ```
 
 The API will be available at:
+
 - **API**: http://localhost:4000
 - **Swagger Docs**: http://localhost:4000/docs
 - **OpenAPI JSON**: http://localhost:4000/openapi.json
@@ -85,17 +86,19 @@ Interactive API documentation is available at `/docs` when the server is running
 
 ### Key Endpoints
 
-
 #### Authentication
+
 - `POST /auth/register` - Register with email/password
 - `POST /auth/login` - Login with email/password
 - `POST /auth/refresh` - Refresh access token
 - `POST /auth/google` - Google One-Tap / Sign-In
 
 #### Users
+
 - `GET /users/me` - Get current user profile
 
 #### Events
+
 - `POST /events` - Create event
 - `GET /events` - List events
 - `GET /events/:id` - Get event details
@@ -103,24 +106,28 @@ Interactive API documentation is available at `/docs` when the server is running
 - `DELETE /events/:id` - Delete event
 
 #### Budget
+
 - `POST /events/:eventId/budget-items` - Create budget item
 - `GET /events/:eventId/budget-items` - List budget items
 - `PATCH /events/:eventId/budget-items/:id` - Update budget item
 - `DELETE /events/:eventId/budget-items/:id` - Delete budget item
 
 #### Checklist
+
 - `POST /events/:eventId/checklist` - Create checklist item
 - `GET /events/:eventId/checklist` - List checklist items
 - `PATCH /events/:eventId/checklist/:id` - Update checklist item
 - `DELETE /events/:eventId/checklist/:id` - Delete checklist item
 
 #### Guests
+
 - `POST /events/:eventId/guests` - Create guest
 - `GET /events/:eventId/guests` - List guests
 - `PATCH /events/:eventId/guests/:id` - Update guest
 - `DELETE /events/:eventId/guests/:id` - Delete guest
 
 #### Seating
+
 - `POST /events/:eventId/tables` - Create table
 - `GET /events/:eventId/tables` - List tables
 - `POST /events/:eventId/seats` - Create seat assignment
@@ -137,6 +144,7 @@ Authorization: Bearer <your_jwt_token>
 ## 🌍 Internationalization
 
 Events support bilingual content (Serbian/English) through:
+
 - `locale` field: Primary language (`sr` or `en`)
 - `sectionsI18n` field: JSON object with localized content
 
@@ -192,4 +200,3 @@ SOFTWARE.
 ---
 
 **Made with ❤️ for couples planning their special day**
-
