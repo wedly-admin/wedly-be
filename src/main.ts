@@ -10,7 +10,7 @@ async function bootstrap() {
 
   app.use(helmet());
   app.use(cookieParser());
-  // app.enableCors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000', credentials: true });
+  app.enableCors();
 
   const openapi = buildOpenAPIDocument();
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapi));
