@@ -1,7 +1,13 @@
 import { Controller, Post, Body, UsePipes } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
-import { RegisterSchema, LoginSchema, RefreshSchema } from "./schemas";
+import {
+  RegisterSchema,
+  LoginSchema,
+  RefreshSchema,
+  ForgotPasswordSchema,
+  ResetPasswordSchema,
+} from "./schemas";
 
 @Controller("auth")
 export class AuthController {
@@ -23,5 +29,17 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(RefreshSchema))
   async refresh(@Body() dto: any) {
     return this.authService.refresh(dto.refreshToken);
+  }
+
+  @Post("forgot-password")
+  @UsePipes(new ZodValidationPipe(ForgotPasswordSchema))
+  async forgotPassword(@Body() dto: any) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  @Post("reset-password")
+  @UsePipes(new ZodValidationPipe(ResetPasswordSchema))
+  async resetPassword(@Body() dto: any) {
+    return this.authService.resetPassword(dto);
   }
 }

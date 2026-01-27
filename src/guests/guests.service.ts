@@ -12,8 +12,6 @@ export class GuestsService {
         groupId: dto.groupId,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        phone: dto.phone,
-        email: dto.email,
         side: dto.side || 'OTHER',
         status: dto.status || 'PENDING',
         guests: dto.guests || 1,

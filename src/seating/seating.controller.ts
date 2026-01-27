@@ -64,5 +64,13 @@ export class SeatingController {
   async removeSeat(@Param('id') id: string) {
     return this.seatingService.removeSeat(id);
   }
+
+  @Patch('events/:eventId/seats/batch')
+  async batchUpdateSeats(
+    @Param('eventId') eventId: string,
+    @Body() dto: { updates: Array<{ id: string; position: number }> }
+  ) {
+    return this.seatingService.batchUpdatePositions(eventId, dto.updates);
+  }
 }
 

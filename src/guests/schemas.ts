@@ -12,8 +12,6 @@ export const GuestSchema = z.object({
   groupId: z.string().optional(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  phone: z.string().optional(),
-  email: z.string().email().optional(),
   side: GuestSideEnum.default('OTHER'),
   status: GuestStatusEnum.default('PENDING'),
   guests: z.number().int().positive().default(1),

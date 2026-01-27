@@ -15,7 +15,7 @@
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.3.0",
-    "@prisma/client": "^5.9.0",
+    "@prisma/client": "^5.22.0",
     "argon2": "^0.31.2",
     "cookie-parser": "^1.4.6",
     "google-auth-library": "^9.6.0",

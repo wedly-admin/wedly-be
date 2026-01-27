@@ -7,9 +7,66 @@ import { JwtService } from "@nestjs/jwt";
 import * as argon2 from "argon2";
 import { PrismaService } from "../common/prisma.service";
 
+import { randomBytes } from "crypto";
+
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+
+  // ... (previous methods)
+
+  async forgotPassword(dto: { email: string }) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (!user) {
+      // For security, don't reveal that user doesn't exist
+      return { message: "If an account exists with this email, you will receive a reset link." };
+    }
+
+    const token = randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 3600000); // 1 hour
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: token,
+        passwordResetExpires: expires,
+      },
+    });
+
+    // MOCK EMAIL SENDING
+    console.log(`[AUTH] Password reset link for ${user.email}: http://localhost:3000/auth/reset-password?token=${token}`);
+
+    return { message: "If an account exists with this email, you will receive a reset link." };
+  }
+
+  async resetPassword(dto: { token: string; password: string }) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetToken: dto.token,
+        passwordResetExpires: { gt: new Date() },
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException("Invalid or expired reset token");
+    }
+
+    const passwordHash = await argon2.hash(dto.password);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+      },
+    });
+
+    return { message: "Password has been reset successfully." };
+  }
 
   async register(dto: { email: string; password: string; name?: string }) {
     const existing = await this.prisma.user.findUnique({
