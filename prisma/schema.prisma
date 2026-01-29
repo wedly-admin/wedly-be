@@ -19,6 +19,7 @@ model User {
   weddingCity     String?
   currency        String?  @default("RSD")
   totalBudget     Int?     @default(0)
+  defaultTableCapacity Int?  @default(12)
   primaryEventId       String?   @db.ObjectId
   passwordResetToken   String?
   passwordResetExpires DateTime?

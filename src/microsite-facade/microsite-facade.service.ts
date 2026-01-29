@@ -3,7 +3,7 @@ import { PrismaService } from "../common/prisma.service";
 
 @Injectable()
 export class MicrositeFacadeService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   private async getUserPrimaryEventId(userId: string): Promise<string> {
     const user = await this.prisma.user.findUnique({
@@ -108,5 +108,19 @@ export class MicrositeFacadeService {
       where: { eventId },
       data: { slug },
     });
+  }
+
+  async delete(userId: string) {
+    const eventId = await this.getUserPrimaryEventId(userId);
+    const microsite = await this.prisma.microsite.findUnique({
+      where: { eventId },
+    });
+    if (!microsite) {
+      throw new NotFoundException("Microsite not found");
+    }
+    await this.prisma.microsite.delete({
+      where: { eventId },
+    });
+    return { message: "Microsite deleted" };
   }
 }

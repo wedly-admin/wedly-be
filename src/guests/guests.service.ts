@@ -3,7 +3,7 @@ import { PrismaService } from '../common/prisma.service';
 
 @Injectable()
 export class GuestsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(eventId: string, dto: any) {
     return this.prisma.guest.create({
@@ -17,7 +17,6 @@ export class GuestsService {
         guests: dto.guests || 1,
         tags: dto.tags || [],
         notes: dto.notes,
-        seatId: dto.seatId,
       },
     });
   }

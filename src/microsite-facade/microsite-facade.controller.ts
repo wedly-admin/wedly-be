@@ -4,6 +4,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   UseGuards,
   Req,
@@ -16,7 +17,7 @@ const SLUG_REGEX = /^[a-z0-9-]+$/;
 @Controller("microsite")
 @UseGuards(JwtAuthGuard)
 export class MicrositeFacadeController {
-  constructor(private micrositeFacadeService: MicrositeFacadeService) {}
+  constructor(private micrositeFacadeService: MicrositeFacadeService) { }
 
   @Get()
   async get(@Req() req: any) {
@@ -50,6 +51,11 @@ export class MicrositeFacadeController {
   async regenerateSlug(@Req() req: any, @Body() body: { slug: string }) {
     validateSlug(body?.slug, true);
     return this.micrositeFacadeService.regenerateSlug(req.user.userId, body.slug);
+  }
+
+  @Delete()
+  async delete(@Req() req: any) {
+    return this.micrositeFacadeService.delete(req.user.userId);
   }
 }
 
