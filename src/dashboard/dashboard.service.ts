@@ -3,7 +3,7 @@ import { PrismaService } from "../common/prisma.service";
 
 @Injectable()
 export class DashboardService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async getDashboardData(userId: string) {
     // Get user with primary event
@@ -19,7 +19,7 @@ export class DashboardService {
     const eventId = user.primaryEventId;
 
     // Get all aggregation data in parallel
-    const [checklistItems, guests] = await Promise.all([
+    const [checklistItems, totalGuests] = await Promise.all([
       this.prisma.checklistItem.findMany({
         where: { eventId },
         select: {
@@ -27,10 +27,7 @@ export class DashboardService {
           advancePayment: true,
         },
       }),
-      this.prisma.guest.findMany({
-        where: { eventId },
-        select: { guests: true },
-      }),
+      this.prisma.guest.count({ where: { eventId } }),
     ]);
 
     // Use user's totalBudget instead of calculating from budgetItems
@@ -49,11 +46,6 @@ export class DashboardService {
         item.status === "COMPLETED" ||
         item.status === "done"
     ).length;
-    // Sum all guests including additional guests (guests field)
-    const totalGuests = guests.reduce(
-      (sum, guest) => sum + (guest.guests || 1),
-      0
-    );
     const weddingProgress =
       totalTasks > 0 ? Math.round((finishedTasks / totalTasks) * 100) : 0;
 

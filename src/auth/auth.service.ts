@@ -11,7 +11,7 @@ import { randomBytes } from "crypto";
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+  constructor(private prisma: PrismaService, private jwtService: JwtService) { }
 
   // ... (previous methods)
 
@@ -68,7 +68,15 @@ export class AuthService {
     return { message: "Password has been reset successfully." };
   }
 
-  async register(dto: { email: string; password: string; name?: string }) {
+  async register(dto: {
+    email: string;
+    password: string;
+    name?: string;
+    brideFullName?: string;
+    groomFullName?: string;
+    weddingDate?: string;
+    location?: string;
+  }) {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -76,12 +84,20 @@ export class AuthService {
       throw new BadRequestException("User with this email already exists");
     }
 
+    const weddingDateParsed = dto.weddingDate
+      ? new Date(dto.weddingDate)
+      : undefined;
+
     const passwordHash = await argon2.hash(dto.password);
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         passwordHash,
         name: dto.name,
+        brideFullName: dto.brideFullName,
+        groomFullName: dto.groomFullName,
+        weddingDate: weddingDateParsed,
+        weddingCity: dto.location,
       },
     });
 
@@ -91,6 +107,7 @@ export class AuthService {
         ownerId: user.id,
         title: "My Wedding",
         locale: "en",
+        date: weddingDateParsed,
       },
     });
 

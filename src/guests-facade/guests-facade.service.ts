@@ -3,7 +3,7 @@ import { PrismaService } from "../common/prisma.service";
 
 @Injectable()
 export class GuestsFacadeService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Get user's primary event ID
@@ -41,7 +41,6 @@ export class GuestsFacadeService {
         email: dto.email,
         side: validSide,
         status: validStatus,
-        guests: dto.guests || 1,
         tags: dto.tags || [],
         notes: dto.notes,
       },
@@ -82,6 +81,7 @@ export class GuestsFacadeService {
 
     // Ensure side and status are valid enum values if provided
     const updateData: any = { ...dto };
+    delete updateData.guests; // no longer used
     if (dto.side && !["BRIDE", "GROOM", "BOTH", "OTHER"].includes(dto.side)) {
       updateData.side = "OTHER";
     }

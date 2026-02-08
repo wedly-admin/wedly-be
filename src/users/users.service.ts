@@ -22,13 +22,19 @@ export class UsersService {
     const raw = dto.weddingDate ?? dto.weddingDetails?.date;
     let weddingDateValue: Date | undefined;
     if (raw != null && String(raw).trim() !== "") {
-      const parts = String(raw).trim().split("-");
-      if (parts.length === 3) {
-        const mm = parseInt(parts[0], 10);
-        const dd = parseInt(parts[1], 10);
-        const yyyy = parseInt(parts[2], 10);
-        if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31 && yyyy >= 1970) {
-          weddingDateValue = new Date(yyyy, mm - 1, dd);
+      const s = String(raw).trim();
+      if (s.includes("T") || /^\d{4}-\d{2}-\d{2}$/.test(s)) {
+        const d = new Date(s);
+        if (!Number.isNaN(d.getTime())) weddingDateValue = d;
+      } else {
+        const parts = s.split("-");
+        if (parts.length === 3) {
+          const mm = parseInt(parts[0], 10);
+          const dd = parseInt(parts[1], 10);
+          const yyyy = parseInt(parts[2], 10);
+          if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31 && yyyy >= 1970) {
+            weddingDateValue = new Date(yyyy, mm - 1, dd);
+          }
         }
       }
     }

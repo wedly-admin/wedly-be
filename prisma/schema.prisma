@@ -76,7 +76,6 @@ model Guest {
   email     String?
   side      String
   status    String
-  guests    Int      @default(1)
   tags      String[]
   notes     String?
 }

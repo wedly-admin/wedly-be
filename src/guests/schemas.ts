@@ -14,7 +14,6 @@ export const GuestSchema = z.object({
   lastName: z.string().min(1),
   side: GuestSideEnum.default('OTHER'),
   status: GuestStatusEnum.default('PENDING'),
-  guests: z.number().int().positive().default(1),
   tags: z.array(z.string()).default([]),
   notes: z.string().optional(),
   seatId: z.string().optional(),

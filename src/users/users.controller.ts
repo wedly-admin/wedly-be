@@ -15,23 +15,23 @@ export class UsersController {
     }
 
     const d = user.weddingDate;
-    const dateStr = d
-      ? `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}-${d.getFullYear()}`
-      : "";
+    const weddingDateStr = d ? d.toISOString() : "";
 
     return {
       user: {
+        _id: user.id,
         id: user.id,
         email: user.email,
         groomFullName: user.groomFullName || "",
         brideFullName: user.brideFullName || "",
+        weddingDate: weddingDateStr,
         weddingDetails: {
-          date: dateStr,
+          date: weddingDateStr,
           country: user.weddingCountry || "",
           city: user.weddingCity || "",
         },
-        currency: user.currency || "RSD",
-        totalBudget: user.totalBudget || 0,
+        currency: user.currency || "USD",
+        totalBudget: user.totalBudget ?? 0,
         defaultTableCapacity: user.defaultTableCapacity ?? 12,
       },
     };

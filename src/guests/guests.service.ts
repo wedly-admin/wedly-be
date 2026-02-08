@@ -14,7 +14,6 @@ export class GuestsService {
         lastName: dto.lastName,
         side: dto.side || 'OTHER',
         status: dto.status || 'PENDING',
-        guests: dto.guests || 1,
         tags: dto.tags || [],
         notes: dto.notes,
       },
