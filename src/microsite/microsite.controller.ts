@@ -54,7 +54,17 @@ export class MicrositeController {
     return this.micrositeService.listAssets(eventId);
   }
 
-  // Public routes
+  // Public routes – /w/:slug (primary) and /m/:slug (legacy)
+  @Get('w/:slug')
+  async getPublicW(@Param('slug') slug: string) {
+    return this.micrositeService.getPublicBySlug(slug);
+  }
+
+  @Get('w/:slug/preview')
+  async getPreviewW(@Param('slug') slug: string, @Query('token') token: string) {
+    return this.micrositeService.getPreviewBySlug(slug, token);
+  }
+
   @Get('m/:slug')
   async getPublic(@Param('slug') slug: string) {
     return this.micrositeService.getPublicBySlug(slug);

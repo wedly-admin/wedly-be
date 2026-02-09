@@ -14,6 +14,9 @@ PORT=4000
 CLIENT_ORIGIN=http://localhost:3000
 API_BASE_URL=http://localhost:4000
 
+# IMPORTANT: CLIENT_ORIGIN must match your frontend URL for CORS
+# The backend will only accept requests from this origin
+
 # For production, update to:
 # CLIENT_ORIGIN=https://yourdomain.com
 # API_BASE_URL=https://api.yourdomain.com
@@ -56,6 +59,19 @@ DATABASE_URL="mongodb+srv://user:pass@cluster.mongodb.net/wedly?retryWrites=true
 
 # Example for local MongoDB:
 # DATABASE_URL="mongodb://localhost:27017/wedly"
+
+# ----------------------------------------------
+# CLOUDFLARE R2 (Gallery & cover image uploads)
+# ----------------------------------------------
+# Optional. If set, gallery and cover images are stored on Cloudflare R2.
+# Create an R2 bucket and API token in Cloudflare Dashboard > R2.
+# Enable public access (e.g. R2.dev subdomain or custom domain).
+
+# CLOUDFLARE_R2_ACCOUNT_ID=your_account_id
+# CLOUDFLARE_R2_ACCESS_KEY_ID=your_access_key_id
+# CLOUDFLARE_R2_SECRET_ACCESS_KEY=your_secret_access_key
+# CLOUDFLARE_R2_BUCKET_NAME=wedly-images
+# CLOUDFLARE_R2_PUBLIC_URL=https://your-bucket-public-url.r2.dev
 
 # ----------------------------------------------
 # OPTIONAL: ADDITIONAL SETTINGS
@@ -109,7 +125,7 @@ Run this in your terminal to generate secure random secrets:
 # For JWT_ACCESS_SECRET
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
-# For JWT_REFRESH_SECRET  
+# For JWT_REFRESH_SECRET
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
@@ -153,4 +169,3 @@ curl -X POST http://localhost:4000/auth/register \
 ```
 
 If you see a successful response with JWT tokens, your environment is configured correctly! 🎉
-

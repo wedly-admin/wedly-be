@@ -8,14 +8,23 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  email         String   @unique
-  passwordHash  String?
-  googleId      String?  @unique
-  name          String?
-  image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  email           String   @unique
+  passwordHash    String
+  name            String?
+  groomFullName   String?
+  brideFullName   String?
+  weddingDate     DateTime?
+  weddingCountry  String?
+  weddingCity     String?
+  currency        String?  @default("RSD")
+  totalBudget     Int?     @default(0)
+  defaultTableCapacity Int?  @default(12)
+  primaryEventId       String?   @db.ObjectId
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 }
 
 model Event {
@@ -44,14 +53,17 @@ model BudgetItem {
 }
 
 model ChecklistItem {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  eventId     String   @db.ObjectId
-  title       String
-  description String?
-  status      String
-  dueDate     DateTime?
-  assigneeId  String?
-  order       Int      @default(0)
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventId        String   @db.ObjectId
+  title          String
+  description    String?
+  status         String
+  dueDate        DateTime?
+  assigneeId     String?
+  order          Int      @default(0)
+  price          Int?
+  advancePayment Int?
+  createdAt      DateTime @default(now())
 }
 
 model Guest {
@@ -64,10 +76,8 @@ model Guest {
   email     String?
   side      String
   status    String
-  guests    Int      @default(1)
   tags      String[]
   notes     String?
-  seatId    String?
 }
 
 model Table {
@@ -85,6 +95,9 @@ model SeatAssignment {
   tableId   String   @db.ObjectId
   guestId   String   @db.ObjectId
   position  Int      @default(0)
+  
+  @@unique([eventId, guestId], name: "unique_guest_per_event")
+  @@index([eventId, tableId])
 }
 
 model Microsite {
