@@ -95,9 +95,6 @@ export class AuthService {
       ? new Date(dto.weddingDate)
       : undefined;
 
-    const verificationToken = randomBytes(32).toString("hex");
-    const verificationExpires = new Date(Date.now() + 24 * 3600000); // 24 hours
-
     const passwordHash = await argon2.hash(dto.password);
     const user = await this.prisma.user.create({
       data: {
@@ -108,9 +105,10 @@ export class AuthService {
         groomFullName: dto.groomFullName,
         weddingDate: weddingDateParsed,
         weddingCity: dto.location,
-        emailVerified: false,
-        emailVerificationToken: verificationToken,
-        emailVerificationExpires: verificationExpires,
+        // [VERIFICATION_OFF] odmah ulogovan; kad uključiš verifikaciju, vrati emailVerified: false + token + send email
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
       },
     });
 
@@ -129,16 +127,21 @@ export class AuthService {
       data: { primaryEventId: event.id },
     });
 
-    const verifyUrl = this.getVerifyEmailUrl(verificationToken);
-    // Send email in background so register responds immediately (avoids long waits if SMTP is slow)
-    this.mail.sendVerificationEmail(user.email, verifyUrl).catch((err) => {
-      console.error("[AUTH] Background verification email failed:", err?.message || err);
-    });
-
+    // [VERIFICATION_OFF] ne šalje se email; vraćamo token da se odmah uloguje
+    const tokens = await this.generateTokens(user.id, user.email);
     return {
-      message: "Please verify your email to continue. Check your inbox (and spam folder).",
-      email: user.email,
+      user: { id: user.id, email: user.email, name: user.name },
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     };
+
+    // [VERIFICATION_ON] kad uključiš verifikaciju, zakomentariši return iznad i odkomentariši ispod:
+    // const verificationToken = randomBytes(32).toString("hex");
+    // const verificationExpires = new Date(Date.now() + 24 * 3600000);
+    // (u create koristi emailVerified: false, emailVerificationToken, emailVerificationExpires)
+    // const verifyUrl = this.getVerifyEmailUrl(verificationToken);
+    // this.mail.sendVerificationEmail(user.email, verifyUrl).catch((err) => { ... });
+    // return { message: "...", email: user.email };
   }
 
   private getVerifyEmailUrl(token: string): string {
@@ -207,9 +210,10 @@ export class AuthService {
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException("Invalid credentials");
     }
-    if (!user.emailVerified && user.emailVerificationToken != null) {
-      throw new UnauthorizedException("EMAIL_NOT_VERIFIED");
-    }
+    // [VERIFICATION_OFF] ne proveravamo emailVerified; kad uključiš verifikaciju, odkomentariši:
+    // if (!user.emailVerified && user.emailVerificationToken != null) {
+    //   throw new UnauthorizedException("EMAIL_NOT_VERIFIED");
+    // }
     const valid = await argon2.verify(user.passwordHash, dto.password);
     if (!valid) {
       throw new UnauthorizedException("Invalid credentials");
