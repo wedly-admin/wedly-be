@@ -7,6 +7,8 @@ import {
   RefreshSchema,
   ForgotPasswordSchema,
   ResetPasswordSchema,
+  VerifyEmailSchema,
+  ResendVerificationSchema,
 } from "./schemas";
 
 @Controller("auth")
@@ -41,5 +43,17 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(ResetPasswordSchema))
   async resetPassword(@Body() dto: any) {
     return this.authService.resetPassword(dto);
+  }
+
+  @Post("verify-email")
+  @UsePipes(new ZodValidationPipe(VerifyEmailSchema))
+  async verifyEmail(@Body() dto: { token: string }) {
+    return this.authService.verifyEmail(dto.token);
+  }
+
+  @Post("resend-verification")
+  @UsePipes(new ZodValidationPipe(ResendVerificationSchema))
+  async resendVerification(@Body() dto: { email: string }) {
+    return this.authService.resendVerificationEmail(dto.email);
   }
 }

@@ -14,10 +14,12 @@ import { GuestsFacadeModule } from "./guests-facade/guests-facade.module";
 import { SeatingFacadeModule } from "./seating-facade/seating-facade.module";
 import { MicrositeFacadeModule } from "./microsite-facade/microsite-facade.module";
 import { GuestPhotosModule } from "./guest-photos/guest-photos.module";
+import { MailModule } from "./mail/mail.module";
 import { PrismaService } from "./common/prisma.service";
 
 @Module({
   imports: [
+    MailModule,
     AuthModule,
     UsersModule,
     EventsModule,

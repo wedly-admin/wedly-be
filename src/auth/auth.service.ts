@@ -5,13 +5,17 @@ import {
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as argon2 from "argon2";
-import { PrismaService } from "../common/prisma.service";
-
 import { randomBytes } from "crypto";
+import { PrismaService } from "../common/prisma.service";
+import { MailService } from "../mail/mail.service";
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService) { }
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+    private mail: MailService,
+  ) {}
 
   // ... (previous methods)
 
@@ -36,9 +40,12 @@ export class AuthService {
       },
     });
 
-    // MOCK EMAIL SENDING
-    console.log(`[AUTH] Password reset link for ${user.email}: http://localhost:3000/auth/reset-password?token=${token}`);
-
+    const base = process.env.FRONTEND_URL || "http://localhost:3000";
+    const resetUrl = `${base}/auth/reset-password?token=${token}`;
+    const sent = await this.mail.sendPasswordResetEmail(user.email, resetUrl);
+    if (!sent) {
+      throw new BadRequestException("We could not send the email. Please try again in a few minutes.");
+    }
     return { message: "If an account exists with this email, you will receive a reset link." };
   }
 
@@ -88,6 +95,9 @@ export class AuthService {
       ? new Date(dto.weddingDate)
       : undefined;
 
+    const verificationToken = randomBytes(32).toString("hex");
+    const verificationExpires = new Date(Date.now() + 24 * 3600000); // 24 hours
+
     const passwordHash = await argon2.hash(dto.password);
     const user = await this.prisma.user.create({
       data: {
@@ -98,6 +108,9 @@ export class AuthService {
         groomFullName: dto.groomFullName,
         weddingDate: weddingDateParsed,
         weddingCity: dto.location,
+        emailVerified: false,
+        emailVerificationToken: verificationToken,
+        emailVerificationExpires: verificationExpires,
       },
     });
 
@@ -111,22 +124,79 @@ export class AuthService {
       },
     });
 
-    // Update user with primaryEventId
     await this.prisma.user.update({
       where: { id: user.id },
       data: { primaryEventId: event.id },
     });
 
+    const verifyUrl = this.getVerifyEmailUrl(verificationToken);
+    const sent = await this.mail.sendVerificationEmail(user.email, verifyUrl);
+    if (!sent) {
+      throw new BadRequestException("Account created but we could not send the verification email. Use \"Resend verification\" on the sign-in page with your email.");
+    }
+    return {
+      message: "Please verify your email to continue. Check your inbox (and spam folder).",
+      email: user.email,
+    };
+  }
+
+  private getVerifyEmailUrl(token: string): string {
+    const base = process.env.FRONTEND_URL || "http://localhost:3000";
+    return `${base}/auth/verify-email?token=${token}`;
+  }
+
+  async verifyEmail(token: string) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        emailVerificationToken: token,
+        emailVerificationExpires: { gt: new Date() },
+      },
+    });
+    if (!user) {
+      throw new BadRequestException("Invalid or expired verification link. You can request a new one from the sign-in page.");
+    }
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      },
+    });
     const tokens = await this.generateTokens(user.id, user.email);
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-      token: tokens.accessToken, // Add 'token' alias for frontend compatibility
-      ...tokens,
+      message: "Email verified. You can now sign in.",
+      user: { id: user.id, email: user.email, name: user.name },
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     };
+  }
+
+  async resendVerificationEmail(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      return { message: "If an account exists with this email, you will receive a new verification link." };
+    }
+    if (user.emailVerified) {
+      return { message: "This account is already verified. You can sign in." };
+    }
+    const token = randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 24 * 3600000);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerificationToken: token,
+        emailVerificationExpires: expires,
+      },
+    });
+    const verifyUrl = this.getVerifyEmailUrl(token);
+    const sent = await this.mail.sendVerificationEmail(user.email, verifyUrl);
+    if (!sent) {
+      throw new BadRequestException("We could not send the email. Please try again in a few minutes or contact support.");
+    }
+    return { message: "If an account exists with this email, you will receive a new verification link. Please check your spam folder too." };
   }
 
   async login(dto: { email: string; password: string }) {
@@ -136,7 +206,9 @@ export class AuthService {
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException("Invalid credentials");
     }
-
+    if (!user.emailVerified && user.emailVerificationToken != null) {
+      throw new UnauthorizedException("EMAIL_NOT_VERIFIED");
+    }
     const valid = await argon2.verify(user.passwordHash, dto.password);
     if (!valid) {
       throw new UnauthorizedException("Invalid credentials");
