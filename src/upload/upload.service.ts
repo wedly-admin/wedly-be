@@ -1,6 +1,7 @@
 import { Injectable, ServiceUnavailableException } from "@nestjs/common";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { randomBytes } from "crypto";
+import { Readable } from "stream";
 
 const BUCKET = process.env.CLOUDFLARE_R2_BUCKET_NAME;
 const PUBLIC_URL = process.env.CLOUDFLARE_R2_PUBLIC_URL?.replace(/\/$/, ""); // base URL for public access
@@ -67,5 +68,66 @@ export class UploadService {
 
     const url = `${PUBLIC_URL}/${key}`;
     return { url };
+  }
+
+  /** Upload a guest photo (QR flow) to R2. Key prefix: guest-photos/:userId/ */
+  async uploadGuestPhoto(
+    buffer: Buffer,
+    mimetype: string,
+    userId: string
+  ): Promise<{ url: string }> {
+    if (!this.client || !BUCKET) {
+      throw new ServiceUnavailableException(
+        "Image upload is not configured. Set CLOUDFLARE_R2_* environment variables."
+      );
+    }
+    if (!PUBLIC_URL) {
+      throw new ServiceUnavailableException(
+        "CLOUDFLARE_R2_PUBLIC_URL is required for image upload."
+      );
+    }
+    const ext = getExtension(mimetype);
+    const key = `guest-photos/${userId}/${Date.now()}-${randomBytes(8).toString(
+      "hex"
+    )}.${ext}`;
+
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: key,
+        Body: buffer,
+        ContentType: mimetype,
+      })
+    );
+
+    const url = `${PUBLIC_URL}/${key}`;
+    return { url };
+  }
+
+  /** Get object from R2 as a Node Readable stream (e.g. for download). */
+  async getObjectStream(key: string): Promise<{
+    body: Readable;
+    contentType?: string;
+  }> {
+    if (!this.client || !BUCKET) {
+      throw new ServiceUnavailableException(
+        "Image download is not configured. Set CLOUDFLARE_R2_* environment variables."
+      );
+    }
+    const response = await this.client.send(
+      new GetObjectCommand({ Bucket: BUCKET, Key: key })
+    );
+    const body = response.Body;
+    if (!body) {
+      throw new ServiceUnavailableException("Empty response from storage.");
+    }
+    const nodeStream =
+      "transformToWebStream" in body
+        ? Readable.fromWeb((body as any).transformToWebStream())
+        : (body as Readable);
+    return {
+      body: nodeStream,
+      contentType: response.ContentType ?? "application/octet-stream",
+    };
   }
 }
