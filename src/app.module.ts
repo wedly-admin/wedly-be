@@ -13,6 +13,7 @@ import { BudgetStatsModule } from "./budget-stats/budget-stats.module";
 import { GuestsFacadeModule } from "./guests-facade/guests-facade.module";
 import { SeatingFacadeModule } from "./seating-facade/seating-facade.module";
 import { MicrositeFacadeModule } from "./microsite-facade/microsite-facade.module";
+import { GuestPhotosModule } from "./guest-photos/guest-photos.module";
 import { PrismaService } from "./common/prisma.service";
 
 @Module({
@@ -31,6 +32,7 @@ import { PrismaService } from "./common/prisma.service";
     BudgetStatsModule,
     GuestsFacadeModule,
     MicrositeFacadeModule,
+    GuestPhotosModule,
   ],
   providers: [PrismaService],
 })

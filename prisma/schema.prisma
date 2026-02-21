@@ -124,3 +124,13 @@ model MediaAsset {
   createdAt DateTime @default(now())
 }
 
+model GuestPhotoSubmission {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String   @db.ObjectId
+  message  String?
+  imageUrls String[]
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
