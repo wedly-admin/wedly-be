@@ -1,3 +1,8 @@
+import dns from "dns";
+
+// Prefer IPv4 for outbound connections (fixes SMTP on Railway where IPv6 to Gmail is unreachable)
+dns.setDefaultResultOrder("ipv4first");
+
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import cookieParser from "cookie-parser";
