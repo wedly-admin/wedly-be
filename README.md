@@ -49,14 +49,18 @@ GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_AUDIENCE=your_google_client_id.apps.googleusercontent.com
 
-# Email (SMTP) – verification & password reset (e.g. Gmail)
+# Email – verification & password reset
+# Option A (recommended for production / Railway): Brevo (HTTPS, no SMTP ports)
+BREVO_API_KEY=xkeysib-xxxx
+MAIL_FROM=Wedly <noreply@yourdomain.com>
+# Option B (local): Gmail SMTP (port 587 often blocked on Railway free/hobby)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 MAIL_FROM=Wedly <your-email@gmail.com>
 FRONTEND_URL=http://localhost:3000
-# For Gmail: use an App Password (Google Account → Security → 2-Step Verification → App passwords), not your normal password.
+# Brevo: get API key at https://app.brevo.com/settings/keys/api. Gmail: use App Password, not normal password.
 
 # Prisma (MongoDB)
 DATABASE_URL="mongodb+srv://user:pass@cluster.mongodb.net/wedly?retryWrites=true&w=majority"

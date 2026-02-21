@@ -1,35 +1,50 @@
 import { Injectable } from "@nestjs/common";
 import * as nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
+import { BrevoClient } from "@getbrevo/brevo";
 
-const MAIL_FROM = process.env.MAIL_FROM || "Wedly <noreply@localhost>";
+const MAIL_FROM_RAW = process.env.MAIL_FROM || "Wedly <noreply@localhost>";
+
+function parseFrom(raw: string): { name: string; email: string } {
+  const match = raw.match(/^(.+?)\s*<([^>]+)>$/);
+  if (match) return { name: match[1].trim(), email: match[2].trim() };
+  return { name: "Wedly", email: raw.trim() };
+}
 
 @Injectable()
 export class MailService {
   private transporter: Transporter | null = null;
+  private brevo: BrevoClient | null = null;
+  private sender = parseFrom(MAIL_FROM_RAW);
 
   constructor() {
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
-    const host = process.env.SMTP_HOST || "smtp.gmail.com";
-    const port = parseInt(process.env.SMTP_PORT || "587", 10);
-    const secure = process.env.SMTP_SECURE === "true";
+    const brevoKey = process.env.BREVO_API_KEY;
+    if (brevoKey) {
+      this.brevo = new BrevoClient({ apiKey: brevoKey });
+    }
 
-    if (user && pass) {
-      this.transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure,
-        auth: { user, pass },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-      });
-    } else {
-      console.warn("[MAIL] SMTP not configured: set SMTP_USER and SMTP_PASS in .env. Emails will only be logged to console.");
+    if (!this.brevo) {
+      const user = process.env.SMTP_USER;
+      const pass = process.env.SMTP_PASS;
+      const host = process.env.SMTP_HOST || "smtp.gmail.com";
+      const port = parseInt(process.env.SMTP_PORT || "587", 10);
+      const secure = process.env.SMTP_SECURE === "true" || port === 465;
+      if (user && pass) {
+        this.transporter = nodemailer.createTransport({
+          host,
+          port,
+          secure,
+          auth: { user, pass },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+        });
+      } else {
+        console.warn("[MAIL] No Brevo or SMTP: set BREVO_API_KEY (prod) or SMTP_USER/SMTP_PASS (local). Emails will only be logged.");
+      }
     }
   }
 
-  /** Returns true if email was sent, false if skipped (no SMTP = log only). */
+  /** Returns true if email was sent, false otherwise. */
   async sendVerificationEmail(to: string, verifyUrl: string): Promise<boolean> {
     const subject = "Verify your Wedly account";
     const html = `
@@ -64,10 +79,24 @@ export class MailService {
     logLabel: string,
     linkForLog: string,
   ): Promise<boolean> {
+    if (this.brevo) {
+      try {
+        await this.brevo.transactionalEmails.sendTransacEmail({
+          sender: this.sender,
+          to: [{ email: to }],
+          subject,
+          htmlContent: html,
+        });
+        return true;
+      } catch (err: any) {
+        console.error(`[MAIL] Brevo failed ${logLabel} to ${to}:`, err?.message || err);
+        return false;
+      }
+    }
     if (this.transporter) {
       try {
         await this.transporter.sendMail({
-          from: MAIL_FROM,
+          from: MAIL_FROM_RAW,
           to,
           subject,
           html,
@@ -76,7 +105,7 @@ export class MailService {
       } catch (err: any) {
         console.error(`[MAIL] Failed to send ${logLabel} to ${to}:`, err?.message || err);
         if (err?.code === "EAUTH") {
-          console.error("[MAIL] Check SMTP_USER and SMTP_PASS (for Gmail use an App Password, not your normal password).");
+          console.error("[MAIL] Check SMTP_USER and SMTP_PASS (for Gmail use an App Password).");
         }
         return false;
       }
