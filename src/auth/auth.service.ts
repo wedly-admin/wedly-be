@@ -130,10 +130,11 @@ export class AuthService {
     });
 
     const verifyUrl = this.getVerifyEmailUrl(verificationToken);
-    const sent = await this.mail.sendVerificationEmail(user.email, verifyUrl);
-    if (!sent) {
-      throw new BadRequestException("Account created but we could not send the verification email. Use \"Resend verification\" on the sign-in page with your email.");
-    }
+    // Send email in background so register responds immediately (avoids long waits if SMTP is slow)
+    this.mail.sendVerificationEmail(user.email, verifyUrl).catch((err) => {
+      console.error("[AUTH] Background verification email failed:", err?.message || err);
+    });
+
     return {
       message: "Please verify your email to continue. Check your inbox (and spam folder).",
       email: user.email,

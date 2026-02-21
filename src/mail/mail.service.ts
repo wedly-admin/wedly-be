@@ -21,6 +21,8 @@ export class MailService {
         port,
         secure,
         auth: { user, pass },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
       });
     } else {
       console.warn("[MAIL] SMTP not configured: set SMTP_USER and SMTP_PASS in .env. Emails will only be logged to console.");
